@@ -1,4 +1,4 @@
-## aulon
+## iQueBrew Ticket Modifier
 aulon is an open-source, cross-platform tool for communicating with the [iQue Player](https://en.wikipedia.org/wiki/IQue_Player) over USB, intended as a modern replacement for the official ```ique_diag``` program found in the latest iQue@Home version. Unlike ique_diag, which only works on Windows XP, aulon should work on any common PC platform.  
 
 ### Installation
