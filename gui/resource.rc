@@ -1,0 +1,8 @@
+#include <windows.h>
+
+// 1 RT_MANIFEST "gui/manifest.xml" // Inline manifest not recommended for old rc, but let's try or just standard
+
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "gui/ique_home.manifest"
+
+// Add Icon later if available
+// IDI_ICON1 ICON "icon.ico"

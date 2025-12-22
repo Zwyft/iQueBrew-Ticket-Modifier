@@ -20,17 +20,25 @@
 #ifndef AULON_FS_H
 #define AULON_FS_H
 
+#include <stdint.h>
+
 #define FILE_ENTRIES_START 0x2000
-#define FILE_ENTRY_SIZE    20
-#define NUM_FILE_ENTRIES   409
+#define FILE_ENTRY_SIZE 20
+#define NUM_FILE_ENTRIES 409
 
 int get_current_fs(void);
 int dump_current_fs(void);
-int read_file(const char * filename);
-int write_file(const char * filename);
-int list_file_blocks(const char * filename);
+int read_file(const char *filename);
+int write_file(const char *filename);
+int list_file_blocks(const char *filename);
 void list_files(void);
 void print_stats(void);
-int delete_file_and_update(const char * filename);
+int delete_file_and_update(const char *filename);
+
+// Get storage statistics (for GUI)
+// Returns 1 on success, 0 on failure
+// out_free_blocks, out_used_blocks, out_bad_blocks are filled with counts
+int get_storage_stats(uint32_t *out_free_blocks, uint32_t *out_used_blocks,
+                      uint32_t *out_bad_blocks);
 
 #endif

@@ -22,42 +22,30 @@
 
 // Positions in NAND
 enum {
-    NAND_START = 0x00, // Start of NAND (obviously)
-    FILE_START = 0x40  // After the SKSA area, where the files/filesystem begin
+  NAND_START = 0x00, // Start of NAND (obviously)
+  FILE_START = 0x40  // After the SKSA area, where the files/filesystem begin
 };
 
 int Init(void);
 int GetBBID(void);
-int SetLED(char * line);
-int SignHash(char * line);
+int SetLED(char *line);
+int SignHash(char *line);
 int SetTime(void);
-int ListFileBlocks(char * line);
+int ListFileBlocks(char *line);
 int ListFiles(void);
 int DumpCurrentFS(void);
 int DumpNand(void);
-int ReadSingleBlock(char * line);
+int ReadSingleBlock(char *line);
 int WriteNand(int block_start);
-int WriteSingleBlock(char * line);
-int ReadFile(char * line);
-int WriteFile(char * line);
-int DeleteFile(char * line);
+int WriteSingleBlock(char *line);
+// AulonReadFile
+// Reads data from the iQue player to a file on the PC
+int AulonReadFile(char *input_line);
+// AulonWriteFile
+int AulonWriteFile(char *line);
+// AulonDeleteFile
+int AulonDeleteFile(char *line);
 int PrintStats(void);
 int Close(void);
 
-
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

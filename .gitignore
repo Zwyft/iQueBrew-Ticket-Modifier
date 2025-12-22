@@ -1,0 +1,52 @@
+# Build artifacts
+*.obj
+*.exe
+*.lib
+*.res
+*.pdb
+*.ilk
+build/
+
+# Distribution folder (contains executables and user assets)
+dist/
+
+# Personal device dumps - DO NOT COMMIT
+*.sys
+ticket.sys
+*.bin
+*.dump
+
+# ROMs - DO NOT COMMIT (copyright)
+roms/*.z64
+roms/*.n64
+roms/*.v64
+
+# Box art images (can be re-downloaded)
+images/*.png
+images/*.jpg
+
+# Logs
+*.log
+*.txt
+!README.txt
+!USAGE.txt
+
+# LibUSB build artifacts
+libusb_build/
+libusb_xp.lib
+
+# IDE files
+.vs/
+*.suo
+*.user
+*.sln
+*.vcxproj*
+
+# Temp files
+*.tmp
+*.bak
+~*
+
+# OS files
+Thumbs.db
+.DS_Store
