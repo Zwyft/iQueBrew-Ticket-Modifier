@@ -6,12 +6,19 @@ It serves as a modern replacement for the official ique_diag tool included with 
 Unlike the original tool, iQueBrew works on modern operating systems and common PC platforms using libusb.
 
 ✨ Features
+
 🔌 Communicates with the iQue Player over USB
+
 💻 Cross-platform (Windows, Linux, macOS*)
+
 🆓 Open-source replacement for ique_diag
+
 ⚡ Uses modern libusb 1.0
+
 🛠 Designed for easier setup on modern systems
+
 * macOS support depends on libusb availability and permissions.
+
 
 📦 Installation
 Dependencies
