@@ -1,0 +1,91 @@
+; iQue Player USB Driver INF File for Windows 10/11
+; Uses WinUSB driver to enable libusb communication
+;
+; INSTALLATION INSTRUCTIONS:
+; 1. Disable Driver Signature Enforcement:
+;    - Settings > Update & Security > Recovery > Advanced Startup > Restart Now
+;    - Troubleshoot > Advanced Options > Startup Settings > Restart
+;    - Press F7 to "Disable driver signature enforcement"
+;
+; 2. With driver enforcement disabled:
+;    - Open Device Manager
+;    - Right-click "iQue Player" or unknown USB device
+;    - Update driver > Browse my computer > Let me pick from a list
+;    - Click "Have Disk..." and point to this INF file
+;
+; 3. Alternatively, use Zadig:
+;    - Run Zadig as Administrator
+;    - Options > List All Devices
+;    - Select device with VID 1527 / PID 0001
+;    - Choose WinUSB or libusbK and click Install
+
+[Version]
+Signature   = "$Windows NT$"
+Class       = USBDevice
+ClassGuid   = {88BAE032-5A81-49F0-BC3D-A4FF138216D6}
+Provider    = %ManufacturerName%
+CatalogFile = ique_player.cat
+DriverVer   = 12/20/2024,1.0.0.0
+
+[Manufacturer]
+%ManufacturerName% = Standard,NTamd64,NTx86
+
+[Standard.NTamd64]
+%DeviceName% = USB_Install, USB\VID_1527&PID_0001
+
+[Standard.NTx86]
+%DeviceName% = USB_Install, USB\VID_1527&PID_0001
+
+[USB_Install]
+Include = winusb.inf
+Needs   = WINUSB.NT
+
+[USB_Install.Services]
+Include    = winusb.inf
+AddService = WinUSB,0x00000002,WinUSB_ServiceInstall
+
+[WinUSB_ServiceInstall]
+DisplayName   = %WinUSB_SvcDesc%
+ServiceType   = 1
+StartType     = 3
+ErrorControl  = 1
+ServiceBinary = %12%\WinUSB.sys
+
+[USB_Install.Wdf]
+KmdfService = WINUSB, WinUSB_Install
+
+[WinUSB_Install]
+KmdfLibraryVersion = 1.11
+
+[USB_Install.HW]
+AddReg = Dev_AddReg
+
+[Dev_AddReg]
+HKR,,DeviceInterfaceGUIDs,0x10000,"{A5DCBF10-6530-11D2-901F-00C04FB951ED}"
+
+[USB_Install.CoInstallers]
+AddReg    = CoInstallers_AddReg
+CopyFiles = CoInstallers_CopyFiles
+
+[CoInstallers_AddReg]
+HKR,,CoInstallers32,0x00010000,"WdfCoInstaller01011.dll,WdfCoInstaller","WinUSBCoInstaller2.dll"
+
+[CoInstallers_CopyFiles]
+WinUSBCoInstaller2.dll
+WdfCoInstaller01011.dll
+
+[DestinationDirs]
+CoInstallers_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%
+
+[SourceDisksFiles]
+WinUSBCoInstaller2.dll = 1
+WdfCoInstaller01011.dll = 1
+
+[Strings]
+ManufacturerName = "iQue Ltd."
+DeviceName       = "iQue Player"
+WinUSB_SvcDesc   = "iQue Player USB Driver"
+DiskName         = "iQue Player Driver Disk"

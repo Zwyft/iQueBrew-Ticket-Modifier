@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="iQue Player Hacking Tools - Modern 64-bit compatible toolchain">
+    <title>iQue Tools</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <span class="n64-colors">
+                        <span class="c-red">i</span><span class="c-green">Q</span><span class="c-blue">u</span><span
+                            class="c-yellow">e</span>
+                    </span>
+                </div>
+                <div class="logo-text">
+                    <h1>iQue Tools</h1>
+                    <span class="subtitle">64-bit Hacking Toolkit</span>
+                </div>
+            </div>
+            <div class="status-indicator">
+                <span class="status-dot" id="connectionStatus"></span>
+                <span class="status-text" id="connectionText">Disconnected</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel - Game Selection -->
+            <section class="panel game-panel">
+                <div class="panel-header">
+                    <h2>🎮 Game Selection</h2>
+                </div>
+                <div class="panel-content">
+                    <div class="game-selector">
+                        <label for="gameSelect">Select Title</label>
+                        <select id="gameSelect" class="game-dropdown">
+                            <option value="" disabled selected>Choose a game...</option>
+                        </select>
+                    </div>
+                    <div class="game-info" id="gameInfo">
+                        <div class="game-cover" id="gameCover">
+                            <div class="cover-placeholder">
+                                <span>🎮</span>
+                            </div>
+                        </div>
+                        <div class="game-details">
+                            <div class="detail-row">
+                                <span class="label">Title:</span>
+                                <span class="value" id="gameTitle">-</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Release:</span>
+                                <span class="value" id="gameRelease">-</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">CID:</span>
+                                <span class="value mono" id="gameCID">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Center Panel - Key Management -->
+            <section class="panel keys-panel">
+                <div class="panel-header">
+                    <h2>🔐 Key Management</h2>
+                </div>
+                <div class="panel-content">
+                    <div class="dropzone" id="dropzone">
+                        <div class="dropzone-content">
+                            <span class="dropzone-icon">📁</span>
+                            <span class="dropzone-text">Drop ticket.sys here</span>
+                            <span class="dropzone-hint">or click to browse</span>
+                        </div>
+                        <input type="file" id="fileInput" accept=".sys,.bin" hidden>
+                    </div>
+                    <div class="key-actions">
+                        <button class="btn btn-primary" id="btnDumpKeys" disabled>
+                            <span class="btn-icon">📥</span>
+                            Dump Keys
+                        </button>
+                        <button class="btn btn-secondary" id="btnLoadTicket">
+                            <span class="btn-icon">📂</span>
+                            Load ticket.sys
+                        </button>
+                    </div>
+                    <div class="keys-display" id="keysDisplay">
+                        <div class="key-item">
+                            <span class="key-label">Titlekey IV:</span>
+                            <div class="key-value-container">
+                                <input type="text" class="key-value" id="titlekeyIV" readonly
+                                    placeholder="Not extracted">
+                                <button class="btn-copy" data-target="titlekeyIV" title="Copy">📋</button>
+                            </div>
+                        </div>
+                        <div class="key-item">
+                            <span class="key-label">Content IV:</span>
+                            <div class="key-value-container">
+                                <input type="text" class="key-value" id="contentIV" readonly
+                                    placeholder="Not extracted">
+                                <button class="btn-copy" data-target="contentIV" title="Copy">📋</button>
+                            </div>
+                        </div>
+                        <div class="key-item">
+                            <span class="key-label">SHA-1 Hash:</span>
+                            <div class="key-value-container">
+                                <input type="text" class="key-value" id="sha1Hash" readonly placeholder="Not extracted">
+                                <button class="btn-copy" data-target="sha1Hash" title="Copy">📋</button>
+                            </div>
+                        </div>
+                        <div class="key-item">
+                            <span class="key-label">Titlekey:</span>
+                            <div class="key-value-container">
+                                <input type="text" class="key-value" id="titlekey" readonly placeholder="Not extracted">
+                                <button class="btn-copy" data-target="titlekey" title="Copy">📋</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel - Code Execution -->
+            <section class="panel exec-panel">
+                <div class="panel-header">
+                    <h2>⚡ Code Execution</h2>
+                    <span class="badge">eSKape v2</span>
+                </div>
+                <div class="panel-content">
+                    <div class="exec-steps">
+                        <div class="step" id="step1">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <span class="step-title">Connect iQue Player</span>
+                                <span class="step-status">Waiting...</span>
+                            </div>
+                        </div>
+                        <div class="step" id="step2">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <span class="step-title">Dump NAND & Keys</span>
+                                <span class="step-status">Pending</span>
+                            </div>
+                        </div>
+                        <div class="step" id="step3">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <span class="step-title">Prepare Payload</span>
+                                <span class="step-status">Pending</span>
+                            </div>
+                        </div>
+                        <div class="step" id="step4">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <span class="step-title">Execute eSKape</span>
+                                <span class="step-status">Pending</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="exec-actions">
+                        <button class="btn btn-accent" id="btnStartExploit" disabled>
+                            <span class="btn-icon">🚀</span>
+                            Start Exploit
+                        </button>
+                        <button class="btn btn-danger" id="btnAbort" disabled>
+                            <span class="btn-icon">⛔</span>
+                            Abort
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Console Output -->
+        <section class="console-section">
+            <div class="console-header">
+                <h3>📟 Console Output</h3>
+                <button class="btn btn-small" id="btnClearConsole">Clear</button>
+            </div>
+            <div class="console-output" id="consoleOutput">
+                <div class="console-line info">
+                    <span class="timestamp">[--:--:--]</span>
+                    <span class="message">iQue Tools v1.0.0 - Ready</span>
+                </div>
+                <div class="console-line info">
+                    <span class="timestamp">[--:--:--]</span>
+                    <span class="message">Select a game and load ticket.sys to begin.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <span>iQue Tools - 64-bit Hacking Toolkit</span>
+            <span class="separator">•</span>
+            <span>Built with ❤️ for the iQueBrew community</span>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
