@@ -8,7 +8,7 @@ on:
 jobs:
   windows-exe:
     name: Windows x64 Release
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - name: Checkout
