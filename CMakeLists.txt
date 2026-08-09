@@ -142,9 +142,8 @@ if(WIN32 AND IQUEBREW_BUILD_GUI)
   enable_language(RC)
   add_executable(ique_modern WIN32
     gui/modern_gui.cpp
-    gui/resource.rc
   )
   target_include_directories(ique_modern PRIVATE gui)
-  target_compile_definitions(ique_modern PRIVATE GUI_BUILD WIN32_LEAN_AND_MEAN NOMINMAX)
+  target_compile_definitions(ique_modern PRIVATE GUI_BUILD)
   target_link_libraries(ique_modern PRIVATE aulon_core gdiplus comctl32 comdlg32 shlwapi user32 gdi32 shell32)
 endif()
