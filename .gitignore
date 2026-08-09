@@ -28,6 +28,7 @@ images/*.jpg
 # Logs
 *.log
 *.txt
+!CMakeLists.txt
 !README.txt
 !USAGE.txt
 

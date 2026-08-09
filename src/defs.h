@@ -25,14 +25,18 @@
 
 // Toggle between 0 (off) and 1 (on). If on, commands for writing both NAND
 // and individual files are enabled. This is off by default for safety.
+#ifndef AULON_WRITING_ENABLED
 #define AULON_WRITING_ENABLED 0
+#endif
 
 // Toggle between 0 (off) and 1 (on). If on, aulon takes an optional command
 // line argument "-l <path_to_log_file>". Each usb transfer is appended to
 // the log file with direction and length information (this is important to
 // remember if you are e.g. dumping a NAND -- the entirety of the NAND and
 // then some will be written to the log in addition to the regular dump file!).
+#ifndef AULON_LOGGING_ENABLED
 #define AULON_LOGGING_ENABLED 0
+#endif
 
 #endif
 

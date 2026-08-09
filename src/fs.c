@@ -27,16 +27,13 @@
 #ifdef GUI_BUILD
 #include "gui_redirect.h"
 #endif
-
-#ifdef GUI_BUILD
-#include "gui_redirect.h"
-#endif
 #include "fs.h"
 #include "io.h"
 
 static unsigned char current_fs[BLOCK_SIZE];
 static unsigned char current_sp[SPARE_SIZE];
 static uint32_t current_index = 0;
+static int current_fs_loaded = 0;
 
 /*
     Simple utility functions
@@ -50,6 +47,11 @@ static void construct_filename(char *filename, size_t index) {
 static int set_filename(size_t index, const char *new_fn) {
   size_t full_len = strlen(new_fn);
   size_t fn_len = strcspn(new_fn, ".");
+  if (new_fn[fn_len] != '.') {
+    fprintf(stderr, "Error setting filename: Filename must use 8.3 format.\n");
+    return 0;
+  }
+
   size_t ext_len = full_len - fn_len - 1;
 
   if (full_len > 12 || fn_len > 8 || ext_len > 3) {
@@ -194,6 +196,7 @@ static uint32_t check_seqno(unsigned char *block, unsigned char *spare,
     memcpy(current_fs, block, BLOCK_SIZE);
     memcpy(current_sp, spare, SPARE_SIZE);
     current_index = block_num - 0xFF0;
+    current_fs_loaded = 1;
     return seqno;
   }
 
@@ -332,7 +335,7 @@ void print_stats(void) {
 */
 int get_storage_stats(uint32_t *out_free_blocks, uint32_t *out_used_blocks,
                       uint32_t *out_bad_blocks) {
-  if (current_fs == NULL)
+  if (!current_fs_loaded)
     return 0;
 
   uint32_t free_count = 0;
@@ -654,6 +657,7 @@ int write_file(const char *filename) {
   size_t pc_file_size = get_file_size(pc_file);
   uint32_t pc_file_checksum = calculate_file_checksum(pc_file, pc_file_size);
   uint32_t blocks_required = bytes_to_blocks(pc_file_size);
+  rewind(pc_file);
 
   int success = 0;
   if (pc_file_size > UINT32_MAX || blocks_required > 0xFB0) {

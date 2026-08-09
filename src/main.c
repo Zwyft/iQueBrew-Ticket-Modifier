@@ -18,10 +18,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 #include "defs.h"
 #include "io.h"
@@ -33,7 +33,11 @@ static FILE *input_file = NULL;
 static int server_mode = 0;
 static uint16_t server_port = 5001;
 
-static void close_input_file(void) { fclose(input_file); }
+static void close_input_file(void) {
+  if (input_file != NULL) {
+    fclose(input_file);
+  }
+}
 
 static void open_input_file(char *input_file_path) {
   if (!open_file(&input_file, input_file_path, "r")) {
@@ -52,9 +56,15 @@ static void parse_args(int argc, char *argv[]) {
     } else if (strcmp(argv[i], "-s") == 0) {
       server_mode = 1;
       if (i + 1 < argc) {
-        int port = atoi(argv[i + 1]);
-        if (port > 0 && port < 65536) {
+        char *end = NULL;
+        errno = 0;
+        unsigned long port = strtoul(argv[i + 1], &end, 10);
+        if (errno == 0 && end != argv[i + 1] && *end == '\0' && port > 0 &&
+            port <= UINT16_MAX) {
           server_port = (uint16_t)port;
+          i++;
+        } else if (argv[i + 1][0] != '-') {
+          fprintf(stderr, "Ignoring invalid server port: %s\n", argv[i + 1]);
           i++;
         }
       }

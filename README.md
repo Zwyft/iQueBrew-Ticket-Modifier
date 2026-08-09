@@ -47,8 +47,7 @@ If necessary, download or compile a libusb-1.0 binary and ensure it is accessibl
 
 🛠 Building
 
-See Building.md
- for detailed build instructions.
+See [Building.md](Building.md) for modern CMake build instructions.
 
 📜 Licensing
 

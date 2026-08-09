@@ -37,10 +37,6 @@
 #include "gui_redirect.h"
 #endif
 
-#ifdef GUI_BUILD
-#include "gui_redirect.h"
-#endif
-
 static const uint16_t IQUE_VID =
     0x1527; // 0xBB3D for old test SAs that support USB
 static const uint16_t IQUE_PID = 0xBBDB;
@@ -72,7 +68,8 @@ static int usb_detach_kernel_driver(void) {
 #ifdef __linux__ // Only need the following on Linux
   int r = libusb_kernel_driver_active(device_handle, 0);
   if (r == 1) {
-    if (libusb_detach_kernel_driver(device_handle, 0) < 0) {
+    r = libusb_detach_kernel_driver(device_handle, 0);
+    if (r < 0) {
       fprintf(stderr, "libusb_detach_kernel_driver error: %s\n",
               libusb_error_name(r));
       return 0;
@@ -120,8 +117,8 @@ static int usb_claim_device_interface(void) {
   // Make sure the device is not in an unconfigured state before claiming
   // interface
   int r = usb_check_and_set_device_configuration(1);
-  if (r < 0) {
-    fprintf(stderr, "libusb_claim_interface error: %s\n", libusb_error_name(r));
+  if (!r) {
+    fprintf(stderr, "Could not configure device before claiming interface.\n");
     return 0;
   }
 
@@ -135,8 +132,8 @@ static int usb_claim_device_interface(void) {
   // Check (and possibly set) again to be sure the configuration wasn't changed
   // in the meantime
   r = usb_check_and_set_device_configuration(1);
-  if (r < 0) {
-    fprintf(stderr, "libusb_claim_interface error: %s\n", libusb_error_name(r));
+  if (!r) {
+    fprintf(stderr, "Could not verify device configuration after claim.\n");
     return 0;
   }
 
@@ -176,23 +173,26 @@ int usb_init_connection(void) {
 }
 
 int usb_close_connection(void) {
+  int success = 1;
   if (interface_claimed) {
     int r = libusb_release_interface(device_handle, 0);
     if (r < 0) {
       fprintf(stderr, "libusb_release_interface error: %s\n",
               libusb_error_name(r));
-      return 0;
+      success = 0;
+    } else {
+      interface_claimed = 0;
     }
-    interface_claimed = 0;
   }
   if (kernel_detached) {
     int r = libusb_attach_kernel_driver(device_handle, 0);
     if (r < 0) {
       fprintf(stderr, "libusb_attach_kernel_driver error: %s\n",
               libusb_error_name(r));
-      return 0;
+      success = 0;
+    } else {
+      kernel_detached = 0;
     }
-    kernel_detached = 0;
   }
   if (device_handle) {
     libusb_close(device_handle);
@@ -205,7 +205,7 @@ int usb_close_connection(void) {
 #if defined(AULON_LOGGING_ENABLED) && (AULON_LOGGING_ENABLED == 1)
   usb_log_stop();
 #endif
-  return 1;
+  return success;
 }
 
 int usb_handle_exists(void) { return (device_handle != NULL); }

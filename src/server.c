@@ -5,8 +5,8 @@
     Copyright (c) 2024
     This file is a part of aulon.
 
-    Provides a JSON-based TCP API for the iQue Tools GUI to communicate
-    with aulon running in a Windows XP VM.
+    Provides a JSON-based TCP API for front ends or automation tools to
+    communicate with aulon.
 */
 
 #ifdef _WIN32
@@ -15,6 +15,7 @@
 #pragma comment(lib, "ws2_32.lib")
 #else
 #include <arpa/inet.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -40,6 +41,14 @@
 static SOCKET server_socket = INVALID_SOCKET;
 static SOCKET client_socket = INVALID_SOCKET;
 static int running = 0;
+
+static int socket_last_error(void) {
+#ifdef _WIN32
+  return WSAGetLastError();
+#else
+  return errno;
+#endif
+}
 
 // Simple JSON helpers (no external dependencies)
 static const char *json_get_string(const char *json, const char *key,
@@ -75,13 +84,24 @@ static const char *json_get_string(const char *json, const char *key,
 // Build JSON response
 static void json_response(char *buffer, size_t max_len, int success,
                           const char *message, const char *data) {
+  char escaped_message[1024];
+  size_t out = 0;
+  for (const char *in = message ? message : "";
+       *in != '\0' && out + 2 < sizeof(escaped_message); ++in) {
+    if (*in == '"' || *in == '\\') {
+      escaped_message[out++] = '\\';
+    }
+    escaped_message[out++] = *in;
+  }
+  escaped_message[out] = '\0';
+
   if (data && strlen(data) > 0) {
     snprintf(buffer, max_len,
              "{\"success\":%s,\"message\":\"%s\",\"data\":%s}\n",
-             success ? "true" : "false", message, data);
+             success ? "true" : "false", escaped_message, data);
   } else {
     snprintf(buffer, max_len, "{\"success\":%s,\"message\":\"%s\"}\n",
-             success ? "true" : "false", message);
+             success ? "true" : "false", escaped_message);
   }
 }
 
@@ -184,7 +204,11 @@ int server_start(uint16_t port) {
 
   server_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (server_socket == INVALID_SOCKET) {
-    fprintf(stderr, "[Server] Socket creation failed\n");
+    fprintf(stderr, "[Server] Socket creation failed: %d\n",
+            socket_last_error());
+#ifdef _WIN32
+    WSACleanup();
+#endif
     return -1;
   }
 
@@ -201,14 +225,22 @@ int server_start(uint16_t port) {
 
   if (bind(server_socket, (struct sockaddr *)&server_addr,
            sizeof(server_addr)) == SOCKET_ERROR) {
-    fprintf(stderr, "[Server] Bind failed\n");
+    fprintf(stderr, "[Server] Bind failed: %d\n", socket_last_error());
     closesocket(server_socket);
+    server_socket = INVALID_SOCKET;
+#ifdef _WIN32
+    WSACleanup();
+#endif
     return -1;
   }
 
   if (listen(server_socket, 1) == SOCKET_ERROR) {
-    fprintf(stderr, "[Server] Listen failed\n");
+    fprintf(stderr, "[Server] Listen failed: %d\n", socket_last_error());
     closesocket(server_socket);
+    server_socket = INVALID_SOCKET;
+#ifdef _WIN32
+    WSACleanup();
+#endif
     return -1;
   }
 
@@ -225,7 +257,11 @@ void server_loop(void) {
     printf("[Server] Waiting for client connection...\n");
 
     struct sockaddr_in client_addr;
+#ifdef _WIN32
     int addr_len = sizeof(client_addr);
+#else
+    socklen_t addr_len = sizeof(client_addr);
+#endif
     client_socket =
         accept(server_socket, (struct sockaddr *)&client_addr, &addr_len);
 

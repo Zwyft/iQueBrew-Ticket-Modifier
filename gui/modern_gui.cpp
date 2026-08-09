@@ -1,8 +1,8 @@
 #ifndef _WIN32_IE
-#define _WIN32_IE 0x0500
+#define _WIN32_IE 0x0601
 #endif
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0601
 #endif
 
 #define WIN32_LEAN_AND_MEAN
@@ -99,10 +99,17 @@ std::string GB2312ToUTF8(const char *gb2312) {
   return std::string(&str[0]);
 }
 
-uint16_t Swap16(uint16_t val) { return (val << 8) | (val >> 8); }
-uint32_t Swap32(uint32_t val) {
-  return (val << 24) | ((val << 8) & 0x00FF0000) | ((val >> 8) & 0x0000FF00) |
-         (val >> 24);
+static uint16_t ReadBE16(const std::vector<uint8_t> &buffer, size_t offset) {
+  return (uint16_t)((buffer[offset] << 8) | buffer[offset + 1]);
+}
+
+static uint32_t ReadBE32(const uint8_t *buffer) {
+  return ((uint32_t)buffer[0] << 24) | ((uint32_t)buffer[1] << 16) |
+         ((uint32_t)buffer[2] << 8) | (uint32_t)buffer[3];
+}
+
+static bool ReadExact(FILE *f, void *buffer, size_t size) {
+  return fread(buffer, 1, size, f) == size;
 }
 
 void ParseTicketSys(const char *filepath) {
@@ -111,26 +118,27 @@ void ParseTicketSys(const char *filepath) {
   if (!f)
     return;
 
-  // Read header (num tickets)
-  uint32_t num_tickets_be;
-  fread(&num_tickets_be, 4, 1, f);
-  uint32_t num_tickets = Swap32(num_tickets_be);
+  uint8_t header[4] = {0};
+  if (!ReadExact(f, header, sizeof(header))) {
+    fclose(f);
+    return;
+  }
 
+  uint32_t num_tickets = ReadBE32(header);
   for (uint32_t i = 0; i < num_tickets; i++) {
     std::vector<uint8_t> buffer(TICKET_SIZE);
-    fread(buffer.data(), TICKET_SIZE, 1, f);
+    if (!ReadExact(f, buffer.data(), buffer.size()))
+      break;
 
-    // Offsets for name
-    uint16_t thumb_len = Swap16(*(uint16_t *)&buffer[0x44]);
-    uint16_t title_len = Swap16(*(uint16_t *)&buffer[0x46]);
+    uint16_t thumb_len = ReadBE16(buffer, 0x44);
+    uint16_t title_len = ReadBE16(buffer, 0x46);
 
-    int name_offset = 0x48 + thumb_len + title_len;
-    if (name_offset >= TICKET_SIZE)
+    size_t name_offset = 0x48u + thumb_len + title_len;
+    if (name_offset >= TICKET_SIZE || name_offset >= 0x2800)
       continue;
 
-    // Read Name (Null terminated or up to limit)
-    std::string raw_name = "";
-    for (int k = name_offset; k < 0x2800; k++) {
+    std::string raw_name;
+    for (size_t k = name_offset; k < 0x2800 && k < buffer.size(); k++) {
       if (buffer[k] == 0)
         break;
       raw_name += (char)buffer[k];
@@ -138,67 +146,51 @@ void ParseTicketSys(const char *filepath) {
 
     std::string english_name = "Unknown Game";
 
-    // Match on RAW GB2312 bytes (not decoded) since decoding fails on
-    // non-Chinese Windows These are the actual GB2312 byte sequences for the
-    // Chinese game names Format: \xHH where HH is the hex byte value
-
-    // 马力欧医生 (Dr. Mario 64) - GB2312 bytes
+    // Match on RAW GB2312 bytes since decoding fails on non-Chinese Windows.
     if (raw_name.find("\xC2\xED\xC1\xA6\xC5\xB7\xD2\xBD\xC9\xFA") !=
         std::string::npos)
       english_name = "Dr. Mario 64";
-    // 塞尔达的传说 (Zelda) - GB2312 bytes
-    else if (raw_name.find("\xC8\xFB\xB6\xFB\xB4\xEF") != std::string::npos)
+    else if (raw_name.find("\xC8\xFB\xB6\xFB\xB4\xEF") !=
+             std::string::npos)
       english_name = "Zelda: Ocarina of Time";
-    // 神游马力欧 (Super Mario) - GB2312 bytes
     else if (raw_name.find("\xC9\xF1\xD3\xCE\xC2\xED\xC1\xA6\xC5\xB7") !=
              std::string::npos)
       english_name = "Super Mario 64";
-    // 水上摩托 (Wave Race) - GB2312 bytes
     else if (raw_name.find("\xCB\xAE\xC9\xCF\xC4\xA6\xCD\xD0") !=
              std::string::npos)
       english_name = "Wave Race 64";
-    // 星际火狐 (Star Fox) - GB2312 bytes
     else if (raw_name.find("\xD0\xC7\xBC\xCA\xBB\xF0\xBA\xFC") !=
              std::string::npos)
       english_name = "Star Fox 64";
-    // 耀西故事 (Yoshi's Story) - GB2312 bytes
     else if (raw_name.find("\xD2\xAB\xCE\xF7\xB9\xCA\xCA\xC2") !=
              std::string::npos)
       english_name = "Yoshi's Story";
-    // 任天堂明星大乱斗 (Smash Bros) - GB2312 bytes
-    else if (raw_name.find("\xC8\xCE\xCC\xEC\xCC\xC3") != std::string::npos)
+    else if (raw_name.find("\xC8\xCE\xCC\xEC\xCC\xC3") !=
+             std::string::npos)
       english_name = "Super Smash Bros.";
-    // 纸片马力欧 (Paper Mario) - GB2312 bytes
     else if (raw_name.find("\xD6\xBD\xC6\xAC\xC2\xED\xC1\xA6\xC5\xB7") !=
              std::string::npos)
       english_name = "Paper Mario";
-    // 动物森林 (Animal Crossing) - GB2312 bytes
     else if (raw_name.find("\xB6\xAF\xCE\xEF\xC9\xAD\xC1\xD6") !=
              std::string::npos)
       english_name = "Animal Crossing";
-    // 组合机器人 (Custom Robo) - GB2312 bytes
     else if (raw_name.find("\xD7\xE9\xBA\xCF\xBB\xFA\xC6\xF7\xC8\xCB") !=
              std::string::npos)
       english_name = "Custom Robo";
-    // 罪与罚 (Sin & Punishment) - GB2312 bytes
-    else if (raw_name.find("\xD7\xEF\xD3\xEB\xB7\xA3") != std::string::npos)
+    else if (raw_name.find("\xD7\xEF\xD3\xEB\xB7\xA3") !=
+             std::string::npos)
       english_name = "Sin & Punishment";
-    // 越野摩托 (Excitebike) - GB2312 bytes
     else if (raw_name.find("\xD4\xBD\xD2\xB0\xC4\xA6\xCD\xD0") !=
              std::string::npos)
       english_name = "Excitebike 64";
-    // 马力欧卡丁车 (Mario Kart) - GB2312 bytes
     else if (raw_name.find(
                  "\xC2\xED\xC1\xA6\xC5\xB7\xBF\xA8\xB6\xA1\xB3\xB5") !=
              std::string::npos)
       english_name = "Mario Kart 64";
-    // F-Zero X is already in ASCII
     else if (raw_name.find("F-Zero X") != std::string::npos)
       english_name = "F-Zero X";
 
-    // Check Trial
-    uint16_t trial_type =
-        Swap16(*(uint16_t *)&buffer[TICKET_OFFSET_TRIAL_TYPE]);
+    uint16_t trial_type = ReadBE16(buffer, TICKET_OFFSET_TRIAL_TYPE);
     bool is_trial = (trial_type != 0);
 
     loaded_tickets.push_back({(int)i, english_name, raw_name, is_trial});
@@ -206,24 +198,23 @@ void ParseTicketSys(const char *filepath) {
   fclose(f);
 }
 
-void UnlockTicket(const char *filepath, int index) {
+bool UnlockTicket(const char *filepath, int index) {
+  if (index < 0)
+    return false;
+
   FILE *f = fopen(filepath, "rb+");
   if (!f)
-    return;
+    return false;
 
-  // Calculate offset
   long offset = 4 + (index * TICKET_SIZE) + TICKET_OFFSET_TRIAL_TYPE;
-  fseek(f, offset, SEEK_SET);
+  bool ok = fseek(f, offset, SEEK_SET) == 0;
 
-  // Zero out Trial Type (2 bytes)
-  uint16_t zero16 = 0;
-  fwrite(&zero16, 2, 1, f);
-
-  // Zero out Trial Limit (4 bytes)
-  uint32_t zero32 = 0;
-  fwrite(&zero32, 4, 1, f);
+  uint8_t zeroes[6] = {0};
+  if (ok)
+    ok = fwrite(zeroes, 1, sizeof(zeroes), f) == sizeof(zeroes);
 
   fclose(f);
+  return ok;
 }
 
 // ================= GAME DATABASE =================

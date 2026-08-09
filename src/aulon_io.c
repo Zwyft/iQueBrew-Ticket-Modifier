@@ -31,10 +31,6 @@
 #include "gui_redirect.h"
 #endif
 
-#ifdef GUI_BUILD
-#include "gui_redirect.h"
-#endif
-
 static int is_end_of_buffer_line(unsigned int i, unsigned int length) {
   int not_first_element = (i != 0);
   int not_end_of_buffer = (i != length - 1);
@@ -67,7 +63,8 @@ int get_input(char *line_buffer, int buffer_length, FILE *instream) {
   // null.
   result = (char *)memchr(line_buffer, '\n', buffer_length);
   if (result == NULL) {
-    while (getc(instream) != '\n')
+    int ch;
+    while ((ch = getc(instream)) != '\n' && ch != EOF)
       ;
   } else {
     result[0] = '\0';
@@ -98,7 +95,16 @@ int open_file(FILE **file, const char *filename, const char *mode) {
 }
 
 size_t get_file_size(FILE *file) {
+  if (file == NULL) {
+    return 0;
+  }
+
   unsigned char *buffer = calloc(0x4000, sizeof(unsigned char));
+  if (buffer == NULL) {
+    fprintf(stderr, "Error allocating buffer while calculating file size!\n");
+    return 0;
+  }
+
   rewind(file);
 
   size_t count = 0;
